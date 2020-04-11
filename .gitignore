@@ -1,1 +1,5 @@
 .idea
+3rdparty
+__MACOSX
+results
+__pycache__
