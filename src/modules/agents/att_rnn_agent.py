@@ -40,8 +40,8 @@ class ATTRNNAgent(nn.Module):
 
         self.split = split
         self.input_scheme = input_scheme
-        self.attns = attns
-        self.vfcs = vfcs
+        self.attns = nn.ModuleList(attns)
+        self.vfcs = nn.ModuleList(vfcs)
         self.ffc = ffc
 
         self.fc1 = nn.Linear(len_attn, args.rnn_hidden_dim)
@@ -54,6 +54,7 @@ class ATTRNNAgent(nn.Module):
 
     def forward(self, inputs, hidden_state):
         split_inputs = inputs.split(self.split, dim=1)
+        # print(" split_inputs[0]", split_inputs[0].is_cuda)
         fixed_inputs = []
         var_inputs = []
         for i, part in enumerate(self.input_scheme):
@@ -65,11 +66,13 @@ class ATTRNNAgent(nn.Module):
         fixed_input = th.cat(fixed_inputs, dim=1)
         var_outputs = []
         for i, var_input in enumerate(var_inputs):
+            # print("var_input", var_input.is_cuda)
             values = self.vfcs[i](var_input)
             attn_output = self.attns[i](fixed_input, var_input, values)
             var_outputs.append(attn_output)
 
         fixed_output = self.ffc(fixed_input)
+        # print(fixed_output.size(), var_outputs[0].size())
         attn_output = th.cat([fixed_output] + var_outputs, dim=1)
 
         x = F.relu(self.fc1(attn_output))

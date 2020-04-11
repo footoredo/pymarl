@@ -92,6 +92,8 @@ class BasicMAC:
         return inputs
 
     def _get_input_shape(self, scheme):
+        if self.args.obs_use_scheme:
+            return scheme["obs"]["scheme"]
         input_shape = scheme["obs"]["vshape"]
         if self.args.obs_last_action:
             input_shape += scheme["actions_onehot"]["vshape"][0]

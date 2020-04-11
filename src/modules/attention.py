@@ -1,6 +1,7 @@
 import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
+import numpy as np
 
 
 class Attention(nn.Module):
@@ -11,8 +12,8 @@ class Attention(nn.Module):
         self.key_input_dim = key_input_dim
         self.key_dim = key_dim
         self.n_heads = n_heads
-        self.fcq = [nn.Linear(query_input_dim, key_dim) for _ in range(n_heads)]
-        self.fck = [nn.Linear(key_input_dim, key_dim) for _ in range(n_heads)]
+        self.fcq = nn.ModuleList([nn.Linear(query_input_dim, key_dim) for _ in range(n_heads)])
+        self.fck = nn.ModuleList([nn.Linear(key_input_dim, key_dim) for _ in range(n_heads)])
 
     def forward(self, queries, keys, values):
         """
@@ -23,8 +24,12 @@ class Attention(nn.Module):
         attns = []
         for h in range(self.n_heads):
             q = self.fcq[h](queries)  # batch * key_dim
-            k = self.fcc[h](keys)  # batch * ? * key_dim
-            weight = th.bmm(q.view(-1, 1, self.key_dim), k.transpose(1, 2)) / th.sqrt(self.key_dim)  # batch * 1 * ?
-            attn = th.bmm(F.softmax(weight, dim=2), values).unsqueeze(1)  # batch * value_dim
+            k = self.fck[h](keys)  # batch * ? * key_dim
+            # print("q", q.size())
+            # print("k", k.size())
+            weight = th.bmm(q.view(-1, 1, self.key_dim), k.transpose(1, 2)) / np.sqrt(self.key_dim)  # batch * 1 * ?
+            # print("weight", weight.size())
+            attn = th.bmm(F.softmax(weight, dim=2), values).squeeze(1)  # batch * value_dim
+            # print("attn", attn.size())
             attns.append(attn)
         return th.cat(attns, dim=1)
