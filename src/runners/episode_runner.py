@@ -45,12 +45,16 @@ class EpisodeRunner:
         self.env.reset()
         self.t = 0
 
-    def run(self, test_mode=False):
+    def run(self, test_mode=False, render_gif=False):
         self.reset()
 
         terminated = False
         episode_return = 0
         self.mac.init_hidden(batch_size=self.batch_size)
+
+        frames = []
+        if render_gif:
+            frames.append(self.env.render_frame())
 
         while not terminated:
 
@@ -60,6 +64,7 @@ class EpisodeRunner:
                 "obs": [self.env.get_obs()]
             }
 
+            # print(pre_transition_data)
             self.batch.update(pre_transition_data, ts=self.t)
 
             # Pass the entire batch of experiences up till now to the agents
@@ -68,6 +73,9 @@ class EpisodeRunner:
 
             reward, terminated, env_info = self.env.step(actions[0])
             episode_return += reward
+
+            if render_gif:
+                frames.append(self.env.render_frame())
 
             post_transition_data = {
                 "actions": actions,
@@ -102,13 +110,20 @@ class EpisodeRunner:
 
         cur_returns.append(episode_return)
 
+        # print(22222222, len(self.test_returns), self.args.test_nepisode)
         if test_mode and (len(self.test_returns) == self.args.test_nepisode):
+            # print(11211111111, cur_returns, cur_stats, log_prefix)
             self._log(cur_returns, cur_stats, log_prefix)
         elif self.t_env - self.log_train_stats_t >= self.args.runner_log_interval:
             self._log(cur_returns, cur_stats, log_prefix)
             if hasattr(self.mac.action_selector, "epsilon"):
                 self.logger.log_stat("epsilon", self.mac.action_selector.epsilon, self.t_env)
             self.log_train_stats_t = self.t_env
+
+        if render_gif:
+            import imageio
+            # print(frames)
+            imageio.mimsave("tmp.gif", frames, duration=0.2)
 
         return self.batch
 

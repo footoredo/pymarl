@@ -101,6 +101,7 @@ class EpisodeBatch:
 
             dtype = self.scheme[k].get("dtype", th.float32)
             v = th.tensor(v, dtype=dtype, device=self.device)
+            # print(k, _slices, target[k].shape)
             self._check_safe_view(v, target[k][_slices])
             target[k][_slices] = v.view_as(target[k][_slices])
 
@@ -113,6 +114,7 @@ class EpisodeBatch:
 
     def _check_safe_view(self, v, dest):
         idx = len(v.shape) - 1
+        # print(v.shape, dest.shape)
         for s in dest.shape[::-1]:
             if v.shape[idx] != s:
                 if s != 1:

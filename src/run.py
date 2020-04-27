@@ -66,7 +66,7 @@ def run(_run, _config, _log):
 def evaluate_sequential(args, runner):
 
     for _ in range(args.test_nepisode):
-        runner.run(test_mode=True)
+        runner.run(test_mode=True, render_gif=args.render_gif)
 
     if args.save_replay:
         runner.save_replay()
@@ -143,7 +143,9 @@ def run_sequential(args, logger):
 
         logger.console_logger.info("Loading model from {}".format(model_path))
         learner.load_models(model_path)
-        runner.t_env = timestep_to_load
+
+        if not args.reset_step:
+            runner.t_env = timestep_to_load
 
         if args.evaluate or args.save_replay:
             evaluate_sequential(args, runner)
@@ -193,7 +195,7 @@ def run_sequential(args, logger):
 
         if args.save_model and (runner.t_env - model_save_time >= args.save_model_interval or model_save_time == 0):
             model_save_time = runner.t_env
-            save_path = os.path.join(args.local_results_path, "models", args.unique_token, str(runner.t_env))
+            save_path = os.path.join(args.local_results_path, args.expr_name, "models", args.unique_token, str(runner.t_env))
             #"results/models/{}".format(unique_token)
             os.makedirs(save_path, exist_ok=True)
             logger.console_logger.info("Saving models to {}".format(save_path))

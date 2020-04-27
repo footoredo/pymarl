@@ -6,7 +6,7 @@ epsilon_start: 1.0
 epsilon_finish: 0.05
 epsilon_anneal_time: 50000
 
-runner: "parallel"
+runner: "episode"
 
 buffer_size: 5000
 
@@ -19,10 +19,10 @@ learner: "q_learner"
 double_q: True
 mixer: # Mixer becomes None
 
-name: "att_iql"
+name: "att_iql_compat"
 
 # --- Agent parameters ---
-agent: "att_rnn" # Default rnn agent
+agent: "att_rnn_compat" # Default rnn agent
 rnn_hidden_dim: 64 # Size of hidden state for default rnn agent
 attn_hidden_dim: 64 # Size of hidden state for attention layer
 attn_n_heads: 1 # number of attention head
