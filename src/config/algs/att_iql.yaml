@@ -26,6 +26,7 @@ agent: "att_rnn" # Default rnn agent
 rnn_hidden_dim: 64 # Size of hidden state for default rnn agent
 attn_hidden_dim: 64 # Size of hidden state for attention layer
 attn_n_heads: 1 # number of attention head
+attn_n_layers: 1
 obs_agent_id: False # For attention
 obs_last_action: False # For attention
 obs_use_scheme: True # For attention

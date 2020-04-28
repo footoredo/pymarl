@@ -1,6 +1,7 @@
 import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
+from modules.multi_attention import MultiAttention
 
 
 class COMACritic(nn.Module):
@@ -10,18 +11,39 @@ class COMACritic(nn.Module):
         self.args = args
         self.n_actions = args.n_actions
         self.n_agents = args.n_agents
-
-        input_shape = self._get_input_shape(scheme)
         self.output_type = "q"
+        self.coma_use_attention = args.coma_use_attention
 
-        # Set up network layers
-        self.fc1 = nn.Linear(input_shape, 128)
+        if self.coma_use_attention:
+            n_layers = args.attn_n_layers
+            n_heads = args.attn_n_heads
+            hidden_dim = args.attn_hidden_dim
+            input_scheme = scheme["obs"]["scheme"]
+            input_scheme.append((scheme["actions_onehot"]["vshape"][0], self.n_agents))
+            print(input_scheme)
+            # self.input_scheme = input_scheme
+            # input_scheme.append((scheme["actions_onehot"]["vshape"][0], self.n_agents))  # action
+            # print(input_scheme)
+            self.attn = MultiAttention(input_scheme, n_layers, hidden_dim, n_heads)
+            self.fc1 = nn.Linear(hidden_dim, 128)
+        else:
+            input_shape = self._get_input_shape(scheme)
+
+            # Set up network layers
+            self.fc1 = nn.Linear(input_shape, 128)
         self.fc2 = nn.Linear(128, 128)
         self.fc3 = nn.Linear(128, self.n_actions)
 
     def forward(self, batch, t=None):
         inputs = self._build_inputs(batch, t=t)
-        x = F.relu(self.fc1(inputs))
+        if self.coma_use_attention:
+            bs = batch.batch_size
+            max_t = batch.max_seq_length if t is None else 1
+            inputs = inputs.reshape(bs * max_t * self.n_agents, -1)
+            x = F.relu(self.attn(inputs))
+            x = x.reshape(bs, max_t, self.n_agents, -1)
+        else:
+            x = F.relu(self.fc1(inputs))
         x = F.relu(self.fc2(x))
         q = self.fc3(x)
         return q
@@ -32,7 +54,8 @@ class COMACritic(nn.Module):
         ts = slice(None) if t is None else slice(t, t+1)
         inputs = []
         # state
-        inputs.append(batch["state"][:, ts].unsqueeze(2).repeat(1, 1, self.n_agents, 1))
+        if not self.coma_use_attention:
+            inputs.append(batch["state"][:, ts].unsqueeze(2).repeat(1, 1, self.n_agents, 1))
 
         # observation
         inputs.append(batch["obs"][:, ts])
@@ -44,16 +67,18 @@ class COMACritic(nn.Module):
         inputs.append(actions * agent_mask.unsqueeze(0).unsqueeze(0))
 
         # last actions
-        if t == 0:
-            inputs.append(th.zeros_like(batch["actions_onehot"][:, 0:1]).view(bs, max_t, 1, -1).repeat(1, 1, self.n_agents, 1))
-        elif isinstance(t, int):
-            inputs.append(batch["actions_onehot"][:, slice(t-1, t)].view(bs, max_t, 1, -1).repeat(1, 1, self.n_agents, 1))
-        else:
-            last_actions = th.cat([th.zeros_like(batch["actions_onehot"][:, 0:1]), batch["actions_onehot"][:, :-1]], dim=1)
-            last_actions = last_actions.view(bs, max_t, 1, -1).repeat(1, 1, self.n_agents, 1)
-            inputs.append(last_actions)
+        if not self.coma_use_attention:
+            if t == 0:
+                inputs.append(th.zeros_like(batch["actions_onehot"][:, 0:1]).view(bs, max_t, 1, -1).repeat(1, 1, self.n_agents, 1))
+            elif isinstance(t, int):
+                inputs.append(batch["actions_onehot"][:, slice(t-1, t)].view(bs, max_t, 1, -1).repeat(1, 1, self.n_agents, 1))
+            else:
+                last_actions = th.cat([th.zeros_like(batch["actions_onehot"][:, 0:1]), batch["actions_onehot"][:, :-1]], dim=1)
+                last_actions = last_actions.view(bs, max_t, 1, -1).repeat(1, 1, self.n_agents, 1)
+                inputs.append(last_actions)
 
-        inputs.append(th.eye(self.n_agents, device=batch.device).unsqueeze(0).unsqueeze(0).expand(bs, max_t, -1, -1))
+        if not self.coma_use_attention:
+            inputs.append(th.eye(self.n_agents, device=batch.device).unsqueeze(0).unsqueeze(0).expand(bs, max_t, -1, -1))
 
         inputs = th.cat([x.reshape(bs, max_t, self.n_agents, -1) for x in inputs], dim=-1)
         return inputs

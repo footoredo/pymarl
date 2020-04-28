@@ -19,8 +19,11 @@ class COMALearner:
 
         self.log_stats_t = -self.args.learner_log_interval - 1
 
+        # print("A", self.mac.agent.attn.build_input.input_scheme)
         self.critic = COMACritic(scheme, args)
         self.target_critic = copy.deepcopy(self.critic)
+
+        # print("B", self.mac.agent.attn.build_input.input_scheme)
 
         self.agent_params = list(mac.parameters())
         self.critic_params = list(self.critic.parameters())

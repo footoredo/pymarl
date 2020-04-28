@@ -8,9 +8,9 @@ mask_before_softmax: False
 
 runner: "parallel"
 
-buffer_size: 8
-batch_size_run: 8
-batch_size: 8
+buffer_size: 100000
+batch_size_run: 4
+batch_size: 1024
 
 env_args:
   state_last_action: False # critic adds last action internally
@@ -25,11 +25,21 @@ td_lambda: 0.8
 # use COMA
 agent_output_type: "pi_logits"
 learner: "coma_learner"
-coma_use_attention: False
+coma_use_attention: True
 critic_q_fn: "coma"
 critic_baseline_fn: "coma"
 critic_train_mode: "seq"
 critic_train_reps: 1
 q_nstep: 0  # 0 corresponds to default Q, 1 is r + gamma*Q, etc
+
+# attention
+agent: "multi_att_rnn" # Default rnn agent
+use_rnn: False
+attn_hidden_dim: 64 # Size of hidden state for attention layer
+attn_n_heads: 4 # number of attention head
+attn_n_layers: 2
+obs_agent_id: False # For attention
+obs_last_action: False # For attention
+obs_use_scheme: True # For attention
 
 name: "coma"
