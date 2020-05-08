@@ -8,7 +8,9 @@ epsilon_anneal_time: 50000
 
 runner: "parallel"
 
-buffer_size: 5000
+batch_size_run: 4
+batch_size: 1024
+buffer_size: 100000
 
 # update the target network every {} episodes
 target_update_interval: 200
@@ -19,17 +21,14 @@ learner: "q_learner"
 double_q: True
 mixer: # Mixer becomes None
 
-name: "att_iql"
+name: "multi_att_iql"
 
 # --- Agent parameters ---
-agent: "att_rnn" # Default rnn agent
+agent: "multi_att_rnn" # Default rnn agent
 rnn_hidden_dim: 64 # Size of hidden state for default rnn agent
 attn_hidden_dim: 64 # Size of hidden state for attention layer
-attn_n_heads: 1 # number of attention head
-attn_n_layers: 1
+attn_n_heads: 4 # number of attention head
+attn_n_layers: 2
 obs_agent_id: False # For attention
 obs_last_action: False # For attention
 obs_use_scheme: True # For attention
-
-env_args:
-  obs_use_simple_scheme: True # For attention

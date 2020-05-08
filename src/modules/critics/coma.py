@@ -19,20 +19,20 @@ class COMACritic(nn.Module):
             n_heads = args.attn_n_heads
             hidden_dim = args.attn_hidden_dim
             input_scheme = scheme["obs"]["scheme"]
-            input_scheme.append((scheme["actions_onehot"]["vshape"][0], self.n_agents))
-            print(input_scheme)
+            input_scheme["pattern"].append((scheme["actions_onehot"]["vshape"][0], "agent"))
+            # print(input_scheme)
             # self.input_scheme = input_scheme
             # input_scheme.append((scheme["actions_onehot"]["vshape"][0], self.n_agents))  # action
             # print(input_scheme)
             self.attn = MultiAttention(input_scheme, n_layers, hidden_dim, n_heads)
-            self.fc1 = nn.Linear(hidden_dim, 128)
+            self.fc1 = nn.Linear(hidden_dim, 64)
         else:
             input_shape = self._get_input_shape(scheme)
 
             # Set up network layers
-            self.fc1 = nn.Linear(input_shape, 128)
-        self.fc2 = nn.Linear(128, 128)
-        self.fc3 = nn.Linear(128, self.n_actions)
+            self.fc1 = nn.Linear(input_shape, 64)
+        self.fc2 = nn.Linear(64, 64)
+        self.fc3 = nn.Linear(64, self.n_actions)
 
     def forward(self, batch, t=None):
         inputs = self._build_inputs(batch, t=t)
@@ -40,8 +40,9 @@ class COMACritic(nn.Module):
             bs = batch.batch_size
             max_t = batch.max_seq_length if t is None else 1
             inputs = inputs.reshape(bs * max_t * self.n_agents, -1)
-            x = F.relu(self.attn(inputs))
+            x = self.attn(inputs)
             x = x.reshape(bs, max_t, self.n_agents, -1)
+            x = F.relu(self.fc1(x))
         else:
             x = F.relu(self.fc1(inputs))
         x = F.relu(self.fc2(x))

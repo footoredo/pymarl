@@ -3,7 +3,7 @@ import numpy as np
 
 
 class SpreadEnv(MultiAgentEnv):
-    def __init__(self, n_agents, seed=None, state_last_action=False, obs_last_action=False):
+    def __init__(self, n_agents, seed=None, state_last_action=False, obs_last_action=False, obs_use_simple_scheme=False):
         from multiagent.environment import MultiAgentEnv
         import multiagent.scenarios as scenarios
 
@@ -19,6 +19,7 @@ class SpreadEnv(MultiAgentEnv):
 
         self.state_last_action = state_last_action
         self.obs_last_action = obs_last_action
+        self.obs_use_simple_scheme = obs_use_simple_scheme
 
         self._episode_steps = 0
 
@@ -83,11 +84,9 @@ class SpreadEnv(MultiAgentEnv):
 
         return 1 + dim_p + dim_p + dim_p * n_agents + teammate_size * n_agents
 
-    def get_obs_shape_seq(self):
+    def get_scheme(self):
         """
-        Returns the scheme of the observation
-        e.g. [3, (1, 2), 3]
-        hint: len / (len, n)
+        Returns the scheme of the observation and action
         """
         n_agents = self.n_agents
         dim_p = self.world.dim_p
@@ -98,7 +97,17 @@ class SpreadEnv(MultiAgentEnv):
             teammate_size += self.n_actions
 
         # self vel, self pos, landmark pos, other pos, comm
-        return [1 + dim_p + dim_p, (dim_p, n_agents), (teammate_size, n_agents)]
+        if self.obs_use_simple_scheme:
+            return [1 + dim_p + dim_p, (dim_p, n_agents), (teammate_size, n_agents)]
+        else:
+            return {
+                "observation_pattern": [1 + dim_p + dim_p, (dim_p, "target"), (teammate_size, "agent")],
+                "action_pattern": [1 + dim_p * 2],
+                "objects": {
+                    "target": n_agents,
+                    "agent": n_agents
+                }
+            }
 
     def get_state(self):
         obs_concat = np.concatenate(self.get_obs(), axis=0).astype(

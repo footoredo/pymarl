@@ -1,3 +1,6 @@
-#!/bin/sh
+#!/bin/bash
 
-python src/main.py --config=att_iql --env-config=spread with env_args.n_agents=$1 expr_name=$2_test evaluate=True test_nepisode=1 runner=episode render_gif=True checkpoint_path=results/$2 use_cuda=False runner=episode batch_size_run=1 load_step=$3 $4
+all_args=("$@")
+rest_args=("${all_args[@]:4}")
+
+python src/main.py --config=$1 --env-config=spread with env_args.n_agents=$2 expr_name=$3_test evaluate=True test_nepisode=1 runner=episode render_gif=True checkpoint_path=results/$3 use_cuda=False runner=episode batch_size_run=1 load_step=$4 ${rest_args[@]}
