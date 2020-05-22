@@ -4,7 +4,7 @@ env_args:
   n_agents: 3
   seed: null
   obs_last_action: False
-  obs_use_simple_scheme: False # For attention
+  obs_use_simple_scheme: False  # For attention
 
 runner: parallel
 batch_size_run: 4
@@ -16,5 +16,6 @@ runner_log_interval: 10000
 learner_log_interval: 10000
 t_max: 4000000
 save_model_interval: 50000
+variable_action: False
 
 expr_name: spread

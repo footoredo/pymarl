@@ -19,7 +19,7 @@ class COMACritic(nn.Module):
             n_heads = args.attn_n_heads
             hidden_dim = args.attn_hidden_dim
             input_scheme = scheme["obs"]["scheme"]
-            input_scheme["pattern"].append((scheme["actions_onehot"]["vshape"][0], "agent"))
+            input_scheme["observation_pattern"].append((scheme["actions_onehot"]["vshape"][0], "agent"))
             # print(input_scheme)
             # self.input_scheme = input_scheme
             # input_scheme.append((scheme["actions_onehot"]["vshape"][0], self.n_agents))  # action

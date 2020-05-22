@@ -84,7 +84,7 @@ class SpreadEnv(MultiAgentEnv):
 
         return 1 + dim_p + dim_p + dim_p * n_agents + teammate_size * n_agents
 
-    def get_scheme(self):
+    def get_obs_shape_seq(self):
         """
         Returns the scheme of the observation and action
         """
